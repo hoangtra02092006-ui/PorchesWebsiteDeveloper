@@ -10,15 +10,17 @@ export const targetLookAt  = new THREE.Vector3(0, 0.4, 0)
 export const lookAtCurrent = new THREE.Vector3(0, 0.4, 0)
 export let targetRotY = 0
 
+let annotationsRef = null  // set via setAnnotationsInstance after init
+
 const clock = new THREE.Clock()
 
 export function setModel(m) { model = m }
 export function setTargetCamera(x, y, z) { targetCamPos.set(x, y, z) }
 export function setTargetLookAt(x, y, z) { targetLookAt.set(x, y, z) }
 export function setTargetRotY(v) { targetRotY = v }
+export function setAnnotationsInstance(a) { annotationsRef = a }
 
 export function initScene() {
-  // Renderer
   const canvas = document.getElementById('webgl')
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
   renderer.setSize(window.innerWidth, window.innerHeight)
@@ -29,17 +31,14 @@ export function initScene() {
   renderer.toneMappingExposure = 1.2
   renderer.outputColorSpace = THREE.SRGBColorSpace
 
-  // Scene
   scene = new THREE.Scene()
   scene.background = new THREE.Color('#050505')
   scene.fog = new THREE.FogExp2('#050505', 0.03)
 
-  // Camera
   camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100)
   camera.position.set(0, 1.0, 6.5)
   camera.lookAt(0, 0.4, 0)
 
-  // Lights
   const ambient = new THREE.AmbientLight('#ffffff', 0.25)
   scene.add(ambient)
 
@@ -66,7 +65,6 @@ export function initScene() {
   pointLight.position.set(0, 6, 2)
   scene.add(pointLight)
 
-  // Ground plane
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(20, 20),
     new THREE.MeshStandardMaterial({
@@ -81,10 +79,8 @@ export function initScene() {
   ground.receiveShadow = true
   scene.add(ground)
 
-  // Particles
   particles = new Particles(scene)
 
-  // Resize
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight
     camera.updateProjectionMatrix()
@@ -92,7 +88,6 @@ export function initScene() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   })
 
-  // Render loop
   animate()
 }
 
@@ -101,19 +96,27 @@ function animate() {
 
   const delta = clock.getDelta()
 
-  // Lerp camera position
   camera.position.lerp(targetCamPos, 0.04)
-
-  // Lerp lookAt
   lookAtCurrent.lerp(targetLookAt, 0.04)
   camera.lookAt(lookAtCurrent)
 
-  // Lerp model rotation
   if (model) {
     model.rotation.y += (targetRotY - model.rotation.y) * 0.035
   }
 
-  // Update particles
+  // Keep annotations in sync with actual model rotation
+  if (annotationsRef) {
+    annotationsRef.updateModelRotation(model ? model.rotation.y : 0)
+  }
+
+  // Debug: log projected screen positions when window._debugAnn is true
+  if (window._debugAnn && annotationsRef && annotationsRef.active.length) {
+    annotationsRef.active.forEach(ann => {
+      const s = annotationsRef.toScreen(ann.tip3D)
+      console.log(ann.label, '→ screen:', Math.round(s.x), Math.round(s.y), s.behind ? '[BEHIND]' : '')
+    })
+  }
+
   if (particles) particles.update(delta)
 
   renderer.render(scene, camera)

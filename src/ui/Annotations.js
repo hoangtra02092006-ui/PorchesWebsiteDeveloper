@@ -1,50 +1,81 @@
+import * as THREE from 'three'
+
 export class Annotations {
-  constructor() {
-    this.svg = document.getElementById('annotation-svg')
-    this.currentAnnotations = []
+  constructor(camera, renderer) {
+    this.camera   = camera
+    this.renderer = renderer
+    this.svg      = document.getElementById('annotation-svg')
+    this.active   = []
+    this.modelRotY = 0
     window.addEventListener('resize', () => this.redraw())
+  }
+
+  updateModelRotation(rotY) {
+    this.modelRotY = rotY
+  }
+
+  toScreen(worldPos) {
+    const angle = this.modelRotY
+    const cos = Math.cos(angle)
+    const sin = Math.sin(angle)
+    const rx = worldPos.x * cos - worldPos.z * sin
+    const rz = worldPos.x * sin + worldPos.z * cos
+
+    const vec = new THREE.Vector3(rx, worldPos.y, rz)
+    vec.project(this.camera)
+
+    const W = this.renderer.domElement.clientWidth
+    const H = this.renderer.domElement.clientHeight
+    return {
+      x: (vec.x * 0.5 + 0.5) * W,
+      y: (-vec.y * 0.5 + 0.5) * H,
+      behind: vec.z > 1
+    }
   }
 
   show(annotationsArray) {
     console.log('[Annotations] showing', annotationsArray.length, 'annotations')
-    this.currentAnnotations = annotationsArray
+    this.active = annotationsArray
     this.redraw()
   }
 
   hide() {
-    this.currentAnnotations = []
-    const els = this.svg.querySelectorAll('.ann-group')
-    els.forEach(el => {
-      el.style.transition = 'opacity 0.3s'
-      el.style.opacity = '0'
+    this.active = []
+    const groups = this.svg.querySelectorAll('.ann-group')
+    groups.forEach(g => {
+      g.style.transition = 'opacity 0.3s'
+      g.style.opacity = '0'
     })
-    setTimeout(() => { this.svg.innerHTML = '' }, 350)
+    setTimeout(() => { this.svg.innerHTML = '' }, 320)
   }
 
   redraw() {
     this.svg.innerHTML = ''
-    if (!this.currentAnnotations.length) return
-    this.currentAnnotations.forEach((ann, i) => {
-      setTimeout(() => this.drawOne(ann, i), i * 220)
+    if (!this.active.length) return
+    this.active.forEach((ann, i) => {
+      setTimeout(() => this._draw(ann, i), i * 200)
     })
   }
 
-  drawOne(ann, index) {
+  _draw(ann, index) {
     const W = window.innerWidth
     const H = window.innerHeight
 
-    const x1 = (ann.tipX / 100) * W
-    const y1 = (ann.tipY / 100) * H
+    const screen = this.toScreen(ann.tip3D)
+    if (screen.behind) return
+
+    const x1 = screen.x
+    const y1 = screen.y
     const x2 = (ann.endX / 100) * W
     const y2 = (ann.endY / 100) * H
 
-    // L-shape: tip → (x2, y1) → (x2, y2)
-    const ex = x2
-    const ey = y1
+    // L-shape elbow: horizontal from tip, then vertical to label end
+    const elbowX = x2
+    const elbowY = y1
 
-    const seg1     = Math.hypot(ex - x1, ey - y1)
-    const seg2     = Math.abs(y2 - ey)
-    const totalLen = (seg1 + seg2).toFixed(1)
+    const seg1     = Math.hypot(elbowX - x1, elbowY - y1)
+    const seg2     = Math.abs(y2 - elbowY)
+    const totalLen = Math.max(seg1 + seg2, 1)
 
     const NS = 'http://www.w3.org/2000/svg'
 
@@ -52,93 +83,87 @@ export class Annotations {
     g.setAttribute('class', 'ann-group')
     g.style.opacity = '0'
 
-    // ── PULSING RING ──
+    // Outer pulse ring
     const ring = document.createElementNS(NS, 'circle')
     ring.setAttribute('cx', x1)
     ring.setAttribute('cy', y1)
-    ring.setAttribute('r', '3')
+    ring.setAttribute('r', '4')
     ring.setAttribute('fill', 'none')
     ring.setAttribute('stroke', '#C9A84C')
-    ring.setAttribute('stroke-width', '1')
+    ring.setAttribute('stroke-width', '1.5')
     ring.innerHTML = `
-      <animate attributeName="r" from="3" to="14"
-        dur="1.6s" repeatCount="indefinite" begin="0s"/>
-      <animate attributeName="opacity" from="0.7" to="0"
-        dur="1.6s" repeatCount="indefinite" begin="0s"/>
+      <animate attributeName="r" values="4;16;4" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0;0.8" dur="2s" repeatCount="indefinite"/>
     `
 
-    // ── SOLID DOT ──
+    // Solid center dot
     const dot = document.createElementNS(NS, 'circle')
     dot.setAttribute('cx', x1)
     dot.setAttribute('cy', y1)
-    dot.setAttribute('r', '3.5')
+    dot.setAttribute('r', '4')
     dot.setAttribute('fill', '#C9A84C')
 
-    // ── ELBOW LINE with draw animation ──
-    const path = document.createElementNS(NS, 'polyline')
-    path.setAttribute('points', `${x1},${y1} ${ex},${ey} ${x2},${y2}`)
-    path.setAttribute('fill', 'none')
-    path.setAttribute('stroke', '#C9A84C')
-    path.setAttribute('stroke-width', '0.9')
-    path.setAttribute('opacity', '0.8')
-    path.setAttribute('stroke-dasharray', totalLen)
-    path.setAttribute('stroke-dashoffset', totalLen)
-    path.innerHTML = `
+    // Animated line: tip → elbow → label end
+    const line = document.createElementNS(NS, 'polyline')
+    line.setAttribute('points', `${x1},${y1} ${elbowX},${elbowY} ${x2},${y2}`)
+    line.setAttribute('fill', 'none')
+    line.setAttribute('stroke', '#C9A84C')
+    line.setAttribute('stroke-width', '1')
+    line.setAttribute('opacity', '0.75')
+    line.setAttribute('stroke-dasharray', `${totalLen}`)
+    line.setAttribute('stroke-dashoffset', `${totalLen}`)
+    line.innerHTML = `
       <animate attributeName="stroke-dashoffset"
-        from="${totalLen}" to="0"
-        dur="0.55s" fill="freeze" begin="0s"
-        calcMode="spline" keyTimes="0;1"
-        keySplines="0.4 0 0.2 1"/>
+        from="${totalLen}" to="0" dur="0.6s"
+        fill="freeze" calcMode="spline"
+        keyTimes="0;1" keySplines="0.25 0.1 0.25 1"/>
     `
 
-    // ── END TICK ──
+    // Short tick at label end
     const tick = document.createElementNS(NS, 'line')
-    tick.setAttribute('x1', x2 - 6)
-    tick.setAttribute('y1', y2)
-    tick.setAttribute('x2', x2 + 6)
-    tick.setAttribute('y2', y2)
+    tick.setAttribute('x1', x2)
+    tick.setAttribute('y1', y2 - 5)
+    tick.setAttribute('x2', x2)
+    tick.setAttribute('y2', y2 + 5)
     tick.setAttribute('stroke', '#C9A84C')
     tick.setAttribute('stroke-width', '1')
-    tick.setAttribute('opacity', '0.7')
+    tick.setAttribute('opacity', '0.6')
 
-    // ── LABEL (foreignObject) ──
-    const labelW = 210
-    const labelH = 52
-    const labelX = ann.side === 'right' ? x2 + 14 : x2 - labelW - 14
-    const labelY = y2 - 24
+    // Label foreignObject
+    const labelW = 220
+    const labelX = ann.side === 'right' ? x2 + 12 : x2 - labelW - 12
+    const labelY = y2 - 22
 
     const fo = document.createElementNS(NS, 'foreignObject')
-    fo.setAttribute('x', labelX)
-    fo.setAttribute('y', labelY)
-    fo.setAttribute('width', labelW)
-    fo.setAttribute('height', labelH)
-    fo.setAttribute('overflow', 'visible')
-    fo.innerHTML = `
-      <div xmlns="http://www.w3.org/1999/xhtml"
-           style="font-family:'Rajdhani',sans-serif; line-height:1.3;">
-        <div style="font-size:0.78rem; font-weight:600; color:#ffffff;
-                    letter-spacing:0.05em; white-space:nowrap;">
-          ${ann.label}
-        </div>
-        <div style="font-size:0.62rem; font-weight:300;
-                    color:rgba(255,255,255,0.45); margin-top:3px;
-                    white-space:nowrap;">
-          ${ann.sublabel}
-        </div>
+    fo.setAttribute('x',       String(labelX))
+    fo.setAttribute('y',       String(labelY))
+    fo.setAttribute('width',   String(labelW))
+    fo.setAttribute('height',  '52')
+    fo.setAttribute('overflow','visible')
+    fo.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml"
+      style="font-family:'Rajdhani',sans-serif;">
+      <div style="font-size:0.8rem;font-weight:600;color:#fff;
+                  letter-spacing:0.04em;line-height:1.3;white-space:nowrap;">
+        ${ann.label}
       </div>
-    `
+      <div style="font-size:0.63rem;font-weight:300;margin-top:3px;
+                  color:rgba(255,255,255,0.45);white-space:nowrap;">
+        ${ann.sublabel}
+      </div>
+    </div>`
 
     g.appendChild(ring)
-    g.appendChild(dot)
-    g.appendChild(path)
+    g.appendChild(line)
     g.appendChild(tick)
     g.appendChild(fo)
+    g.appendChild(dot)  // dot on top so it's always visible
     this.svg.appendChild(g)
 
-    // Fade in group
-    setTimeout(() => {
-      g.style.transition = 'opacity 0.4s ease'
-      g.style.opacity = '1'
-    }, 60)
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        g.style.transition = 'opacity 0.35s ease'
+        g.style.opacity = '1'
+      }, 80)
+    })
   }
 }

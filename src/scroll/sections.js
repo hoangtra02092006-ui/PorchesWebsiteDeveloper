@@ -15,22 +15,22 @@ export const SECTIONS = [
     rotY: Math.PI * 0.12,
     annotations: [
       {
-        tipX: 61, tipY: 27,
-        endX: 78, endY: 20,
+        tip3D: { x: 0.0, y: 1.5, z: -1.1 },
+        endX: 80, endY: 18,
         side: 'right',
         label: 'Swan Neck Wing Mount',
         sublabel: 'Adjustable 3-position aluminum alloy'
       },
       {
-        tipX: 56, tipY: 34,
-        endX: 78, endY: 40,
+        tip3D: { x: 0.3, y: 0.6, z: -1.2 },
+        endX: 80, endY: 42,
         side: 'right',
         label: 'Active Gurney Flap',
         sublabel: '+15% downforce coefficient'
       },
       {
-        tipX: 65, tipY: 38,
-        endX: 78, endY: 55,
+        tip3D: { x: -0.2, y: 0.2, z: -1.0 },
+        endX: 80, endY: 62,
         side: 'right',
         label: 'Diffuser Exit',
         sublabel: 'Manages underbody airflow separation'
@@ -45,25 +45,25 @@ export const SECTIONS = [
     rotY: -Math.PI * 0.28,
     annotations: [
       {
-        tipX: 40, tipY: 54,
-        endX: 20, endY: 42,
+        tip3D: { x: -0.3, y: 0.9, z: -0.7 },
+        endX: 18, endY: 28,
+        side: 'left',
+        label: 'Individual Throttle Bodies',
+        sublabel: 'One per cylinder — instant response'
+      },
+      {
+        tip3D: { x: 0.0, y: 0.7, z: -0.5 },
+        endX: 18, endY: 48,
         side: 'left',
         label: 'Flat-Six Boxer Engine',
         sublabel: '4.0L • Naturally aspirated • 510 hp'
       },
       {
-        tipX: 44, tipY: 62,
-        endX: 20, endY: 62,
+        tip3D: { x: 0.2, y: 0.3, z: -0.6 },
+        endX: 18, endY: 68,
         side: 'left',
         label: 'Dry Sump Lubrication',
         sublabel: 'Stable oil supply under 1.4g lateral G'
-      },
-      {
-        tipX: 38, tipY: 46,
-        endX: 20, endY: 30,
-        side: 'left',
-        label: 'Individual Throttle Bodies',
-        sublabel: 'One per cylinder — instant response'
       }
     ]
   },
@@ -75,22 +75,22 @@ export const SECTIONS = [
     rotY: Math.PI * 0.42,
     annotations: [
       {
-        tipX: 58, tipY: 66,
-        endX: 76, endY: 58,
+        tip3D: { x: 0.85, y: 0.25, z: 0.8 },
+        endX: 80, endY: 35,
         side: 'right',
         label: 'PCCB Carbon Ceramic Rotor',
         sublabel: '420mm • 6-piston monobloc caliper'
       },
       {
-        tipX: 54, tipY: 74,
-        endX: 76, endY: 78,
+        tip3D: { x: 0.9, y: 0.18, z: 0.75 },
+        endX: 80, endY: 55,
         side: 'right',
         label: 'Centre-Lock Wheel',
         sublabel: '21" rear • forged magnesium alloy'
       },
       {
-        tipX: 62, tipY: 72,
-        endX: 76, endY: 68,
+        tip3D: { x: 0.85, y: 0.10, z: 0.85 },
+        endX: 80, endY: 72,
         side: 'right',
         label: 'Michelin Pilot Sport Cup 2R',
         sublabel: '305/30 ZR21 — track compound'
@@ -105,21 +105,21 @@ export const SECTIONS = [
     rotY: 0,
     annotations: [
       {
-        tipX: 48, tipY: 40,
-        endX: 70, endY: 30,
+        tip3D: { x: 0.2, y: 1.25, z: 0.1 },
+        endX: 72, endY: 22,
         side: 'right',
         label: 'GT Sport Steering Wheel',
         sublabel: 'Alcantara • integrated rev counter'
       },
       {
-        tipX: 44, tipY: 50,
-        endX: 70, endY: 52,
+        tip3D: { x: 0.3, y: 1.05, z: 0.2 },
+        endX: 72, endY: 45,
         side: 'right',
         label: 'Full Bucket Seat',
         sublabel: 'Carbon fibre shell • 18-way adjustment'
       },
       {
-        tipX: 42, tipY: 38,
+        tip3D: { x: -0.15, y: 1.0, z: 0.3 },
         endX: 28, endY: 28,
         side: 'left',
         label: 'PDK Gear Selector',

@@ -1,21 +1,26 @@
 import './style.css'
-import { initScene } from './scene/SceneSetup.js'
+import { initScene, camera, renderer, setAnnotationsInstance } from './scene/SceneSetup.js'
 import { loadModel } from './scene/ModelLoader.js'
 import { initLoadingScreen } from './ui/LoadingScreen.js'
 import { initNavigation } from './ui/Navigation.js'
 import { initScrollController } from './scroll/ScrollController.js'
+import { Annotations } from './ui/Annotations.js'
 
-// Init Three.js scene first
+// Three.js scene must be first so camera + renderer are available
 initScene()
 
-// Init UI
+// Create Annotations with live camera + renderer references
+const annotations = new Annotations(camera, renderer)
+
+// Register with render loop so it gets rotation updates every frame
+setAnnotationsInstance(annotations)
+
+// Static UI
 initNavigation()
 
-// Init loading screen, pass callback for when model is loaded
+// After model loads: wire up scroll-driven transitions
 initLoadingScreen(() => {
-  // After load: init scroll-driven interactions
-  initScrollController()
+  initScrollController(annotations)
 })
 
-// Start loading the model (drives loading screen progress)
 loadModel()

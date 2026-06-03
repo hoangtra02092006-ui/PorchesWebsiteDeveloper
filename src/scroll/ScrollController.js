@@ -2,14 +2,15 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SECTIONS } from './sections.js'
 import { setTargetCamera, setTargetLookAt, setTargetRotY } from '../scene/SceneSetup.js'
-import { Annotations } from '../ui/Annotations.js'
 import { setActiveDot } from '../ui/Navigation.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const annotations = new Annotations()
+let _annotations = null
 
-export function initScrollController() {
+export function initScrollController(annotations) {
+  _annotations = annotations
+
   SECTIONS.forEach((section, index) => {
     ScrollTrigger.create({
       trigger: `#${section.id}`,
@@ -21,7 +22,6 @@ export function initScrollController() {
     })
   })
 
-  // Scroll progress bar
   ScrollTrigger.create({
     trigger: 'body',
     start:   'top top',
@@ -38,7 +38,6 @@ function transitionToSection(section, index) {
   setTargetLookAt(section.lookAt.x, section.lookAt.y, section.lookAt.z)
   setTargetRotY(section.rotY)
 
-  // Animate section panel
   const panel = document.querySelector(`#${section.id} .panel`)
   if (panel) {
     const isLeft  = panel.classList.contains('left-panel')
@@ -50,9 +49,11 @@ function transitionToSection(section, index) {
     )
   }
 
-  // Annotations
-  annotations.show(section.annotations)
+  // Hide current annotations, then show new ones after camera starts moving
+  if (_annotations) {
+    _annotations.hide()
+    setTimeout(() => _annotations.show(section.annotations), 350)
+  }
 
-  // Nav dot
   setActiveDot(index)
 }
