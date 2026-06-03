@@ -40,11 +40,11 @@ export const SECTIONS = [
     lookAt: { x: 1.0, y: 0.1, z: 0.8 },
     rotY: Math.PI * 0.42,
     annotations: [
-      { tipMarker: 'brake_rotor', endX: 80, endY: 32, side: 'right',
+      { tipMarker: 'brake_rotor', endX: 82, endY: 25, side: 'right',
         label: 'PCCB Carbon Ceramic Rotor',  sublabel: '420mm • 6-piston monobloc caliper' },
-      { tipMarker: 'wheel_rim',   endX: 80, endY: 52, side: 'right',
+      { tipMarker: 'wheel_rim',   endX: 82, endY: 48, side: 'right',
         label: 'Centre-Lock Wheel',          sublabel: '21" rear • forged magnesium alloy' },
-      { tipMarker: 'tire',        endX: 80, endY: 70, side: 'right',
+      { tipMarker: 'tire',        endX: 82, endY: 68, side: 'right',
         label: 'Michelin Pilot Sport Cup 2R', sublabel: '305/30 ZR21 — track compound' }
     ]
   },
@@ -54,11 +54,11 @@ export const SECTIONS = [
     lookAt: { x: 0, y: 0.8, z: 0 },
     rotY: 0,
     annotations: [
-      { tipMarker: 'steering', endX: 75, endY: 20, side: 'right',
+      { tipMarker: 'steering', endX: 22, endY: 22, side: 'left',
         label: 'GT Sport Steering Wheel', sublabel: 'Alcantara • integrated rev counter' },
-      { tipMarker: 'seat',     endX: 75, endY: 45, side: 'right',
+      { tipMarker: 'seat',     endX: 22, endY: 45, side: 'left',
         label: 'Full Bucket Seat',        sublabel: 'Carbon fibre shell • 18-way adjustment' },
-      { tipMarker: 'shifter',  endX: 22, endY: 30, side: 'left',
+      { tipMarker: 'shifter',  endX: 22, endY: 65, side: 'left',
         label: 'PDK Gear Selector',       sublabel: '7-speed dual-clutch • 100ms shifts' }
     ]
   },

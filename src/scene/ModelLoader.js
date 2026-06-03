@@ -5,36 +5,18 @@ import { onLoadComplete, updateLoadingBar } from '../ui/LoadingScreen.js'
 
 const MODEL_URL = 'https://raw.githubusercontent.com/hoangtra02092006-ui/3D-Porches-File/main/Meshy_AI_A_sleek_Porsche_911_G_0603064402_texture.glb'
 
-// Desired WORLD-SPACE positions for each marker.
-// After centering/scaling, the car sits roughly inside x:±1, y:0-1, z:±1.2
-const MARKER_WORLD_TARGETS = [
-  // Section 2 — Aerodynamics
-  { name: 'wing_top',      w: [  0.0,  0.95, -1.0 ] },
-  { name: 'gurney_flap',   w: [  0.3,  0.55, -1.1 ] },
-  { name: 'diffuser',      w: [  0.0,  0.05, -1.0 ] },
+// ── Set to false when calibration is complete ──
+const DEBUG_MARKERS = true
 
-  // Section 3 — Engine
-  { name: 'throttle_body', w: [ -0.25, 0.70, -0.6 ] },
-  { name: 'engine_block',  w: [  0.0,  0.55, -0.5 ] },
-  { name: 'dry_sump',      w: [  0.2,  0.25, -0.55] },
-
-  // Section 4 — Front-right wheel
-  { name: 'brake_rotor',   w: [  0.85, 0.22,  0.75] },
-  { name: 'wheel_rim',     w: [  0.95, 0.22,  0.72] },
-  { name: 'tire',          w: [  0.88, 0.10,  0.78] },
-
-  // Section 5 — Cockpit (top-down)
-  { name: 'steering',      w: [  0.2,  1.05,  0.15] },
-  { name: 'seat',          w: [  0.3,  0.90,  0.25] },
-  { name: 'shifter',       w: [ -0.1,  0.85,  0.30] },
-]
-
-// Exported — starts empty, populated after model loads.
-// Annotations.setMarkers() receives this reference; mutations are seen automatically.
+// Exported — starts empty, populated in-place after model loads
 export const markers = {}
 
-const markerMaterial = new THREE.MeshBasicMaterial({ visible: false })
-const markerGeo      = new THREE.SphereGeometry(0.01)
+const markerMaterial = new THREE.MeshBasicMaterial({
+  color: 0xFF0000,
+  visible: DEBUG_MARKERS,
+  depthTest: false       // always renders on top of the car
+})
+const markerGeo = new THREE.SphereGeometry(DEBUG_MARKERS ? 0.04 : 0.01)
 
 export function loadModel() {
   const manager = new THREE.LoadingManager()
@@ -43,9 +25,7 @@ export function loadModel() {
     const pct = Math.round((loaded / total) * 100)
     updateLoadingBar(pct)
   }
-
-  manager.onLoad = () => { onLoadComplete() }
-
+  manager.onLoad  = () => { onLoadComplete() }
   manager.onError = (url) => {
     console.error('Failed to load:', url)
     updateLoadingBar(100)
@@ -65,7 +45,7 @@ export function loadModel() {
         }
       })
 
-      // Center and scale
+      // ── Center and scale ──
       const box    = new THREE.Box3().setFromObject(m)
       const center = box.getCenter(new THREE.Vector3())
       const size   = box.getSize(new THREE.Vector3())
@@ -79,20 +59,68 @@ export function loadModel() {
       scene.add(m)
       setModel(m)
 
-      // Convert desired world positions → local positions within m,
-      // then attach invisible marker children.
-      //
-      // World = m.position + scale * local
-      //   → local.x = (world.x - m.position.x) / scale
-      //   → local.y =  world.y / scale          (m.position.y == 0)
-      //   → local.z = (world.z - m.position.z) / scale
-      MARKER_WORLD_TARGETS.forEach(({ name, w }) => {
-        const mesh = new THREE.Mesh(markerGeo, markerMaterial)
-        mesh.position.set(
-          (w[0] - m.position.x) / scale,
-           w[1] / scale,
-          (w[2] - m.position.z) / scale
-        )
+      // Force matrix update so worldToLocal() is accurate
+      m.updateMatrixWorld(true)
+
+      // ── Measure WORLD-SPACE bounds after transform ──
+      const worldBox  = new THREE.Box3().setFromObject(m)
+      const wSize     = worldBox.getSize(new THREE.Vector3())
+      const BW = wSize.x, BH = wSize.y, BL = wSize.z
+
+      console.log('%c[ModelLoader] Model world bounds after transform', 'color:#C9A84C;font-weight:bold')
+      console.log('  size:  ', { x: BW.toFixed(3), y: BH.toFixed(3), z: BL.toFixed(3) })
+      console.log('  min:   ', { x: worldBox.min.x.toFixed(3), y: worldBox.min.y.toFixed(3), z: worldBox.min.z.toFixed(3) })
+      console.log('  max:   ', { x: worldBox.max.x.toFixed(3), y: worldBox.max.y.toFixed(3), z: worldBox.max.z.toFixed(3) })
+      console.log('  Car nose  (front): z =', worldBox.max.z.toFixed(3))
+      console.log('  Car tail  (rear):  z =', worldBox.min.z.toFixed(3))
+      console.log('  Car roof  (top):   y =', worldBox.max.y.toFixed(3))
+      console.log('  Car floor (bottom):y =', worldBox.min.y.toFixed(3))
+      console.log('  Car left:          x =', worldBox.min.x.toFixed(3))
+      console.log('  Car right:         x =', worldBox.max.x.toFixed(3))
+
+      // ── Helper: world position via normalised ratios ──
+      // rx: 0 = left edge, 1 = right edge
+      // ry: 0 = floor,     1 = roof
+      // rz: 0 = front nose, 1 = rear tail  (maxZ → minZ)
+      const p = (rx, ry, rz) => new THREE.Vector3(
+        worldBox.min.x + rx * BW,
+        worldBox.min.y + ry * BH,
+        worldBox.max.z - rz * BL
+      )
+
+      // ── MARKER DEFS in world space ──
+      // Adjust rx/ry/rz ratios until red dots sit on the correct car parts.
+      // Press 1-9 in browser to select a marker, then arrow keys + W/S to nudge.
+      // Press P to print updated positions.
+      const MARKER_DEFS = [
+        // ── Section 2: Aerodynamics ──
+        { name: 'wing_top',      pos: p(0.50, 0.90, 0.85) },  // rear wing top
+        { name: 'gurney_flap',   pos: p(0.60, 0.45, 0.92) },  // rear bumper
+        { name: 'diffuser',      pos: p(0.50, 0.05, 0.90) },  // underbody rear
+
+        // ── Section 3: Engine (rear-engine — engine at BACK) ──
+        { name: 'throttle_body', pos: p(0.35, 0.72, 0.78) },  // engine cover top
+        { name: 'engine_block',  pos: p(0.50, 0.50, 0.80) },  // center engine bay
+        { name: 'dry_sump',      pos: p(0.55, 0.22, 0.75) },  // lower engine
+
+        // ── Section 4: Brakes & Wheels (rear-right wheel) ──
+        { name: 'brake_rotor',   pos: p(0.85, 0.18, 0.78) },  // wheel hub center
+        { name: 'wheel_rim',     pos: p(0.90, 0.22, 0.78) },  // rim outer edge
+        { name: 'tire',          pos: p(0.88, 0.08, 0.80) },  // tire bottom contact
+
+        // ── Section 5: Cockpit (top-down view) ──
+        { name: 'steering',      pos: p(0.60, 0.88, 0.40) },  // driver side roof
+        { name: 'seat',          pos: p(0.65, 0.78, 0.50) },  // driver seat area
+        { name: 'shifter',       pos: p(0.50, 0.72, 0.48) },  // center console
+      ]
+
+      // ── Create marker meshes as children of the model ──
+      MARKER_DEFS.forEach(({ name, pos }) => {
+        const mesh = new THREE.Mesh(markerGeo, markerMaterial.clone())
+        // Convert desired world pos → model's local space
+        const localPos = pos.clone()
+        m.worldToLocal(localPos)
+        mesh.position.copy(localPos)
         m.add(mesh)
         markers[name] = mesh
       })
