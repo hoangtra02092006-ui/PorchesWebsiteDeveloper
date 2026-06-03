@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Porsche 911 GT3 — 992.2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- LOADING SCREEN -->
+  <div id="loading-screen">
+    <svg class="loading-logo" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 4 L74 18 L74 62 L40 86 L6 62 L6 18 Z"
+            stroke="#C9A84C" stroke-width="1.5" fill="none"/>
+      <path d="M40 14 L66 26 L66 58 L40 76 L14 58 L14 26 Z"
+            stroke="#C9A84C" stroke-width="0.8" fill="none" opacity="0.5"/>
+      <path d="M28 38 L28 52 M28 38 Q28 28 38 28 Q48 28 48 38 Q48 48 38 48 L28 48"
+            stroke="#C9A84C" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <line x1="40" y1="12" x2="40" y2="30" stroke="#C9A84C" stroke-width="0.6" opacity="0.4"/>
+      <line x1="40" y1="60" x2="40" y2="78" stroke="#C9A84C" stroke-width="0.6" opacity="0.4"/>
+    </svg>
+    <div class="loading-wordmark">PORSCHE</div>
+    <div class="loading-bar-track">
+      <div class="loading-bar-fill" id="loading-bar-fill"></div>
+    </div>
+    <div class="loading-pct" id="loading-pct">0%</div>
+  </div>
+
+  <!-- FIXED NAV -->
+  <nav id="top-nav">
+    <div class="nav-wordmark">PORSCHE</div>
+    <div class="nav-dots" id="nav-dots"></div>
+  </nav>
+
+  <!-- FIXED LEFT PROGRESS LINE -->
+  <div id="scroll-progress-bar"></div>
+
+  <!-- THREE.JS CANVAS -->
+  <canvas id="webgl"></canvas>
+
+  <!-- ANNOTATION SVG OVERLAY -->
+  <svg id="annotation-svg"
+       style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50">
+  </svg>
+
+  <!-- SCROLLABLE SECTIONS -->
+
+  <section id="s1" class="scroll-section">
+    <div class="panel center-panel">
+      <p class="overline">2024 SERIES · 992.2 GENERATION</p>
+      <h1>PORSCHE<br>911 GT3</h1>
+      <p class="tagline">"Born on the Nürburgring.<br>Built for every road."</p>
+      <div class="divider-gold"></div>
+      <div class="specs-row">
+        <div class="spec"><span class="num">510</span><span class="unit">HP</span></div>
+        <div class="spec"><span class="num">3.4s</span><span class="unit">0–100 km/h</span></div>
+        <div class="spec"><span class="num">318</span><span class="unit">km/h</span></div>
+      </div>
+      <div class="scroll-hint">SCROLL TO EXPLORE ↓</div>
+    </div>
+  </section>
+
+  <section id="s2" class="scroll-section">
+    <div class="panel left-panel">
+      <p class="section-num">01</p>
+      <p class="section-label">AERODYNAMICS</p>
+      <h2>Engineered<br>to Fly Low</h2>
+      <p class="body-text">
+        Every surface of the GT3 has a purpose. The fixed rear wing,
+        front splitter, and underbody diffuser work as a unified system —
+        generating 150 kg of downforce at 200 km/h, keeping all four
+        contact patches firmly planted.
+      </p>
+      <div class="stat-pill">150 KG DOWNFORCE</div>
+    </div>
+  </section>
+
+  <section id="s3" class="scroll-section">
+    <div class="panel right-panel">
+      <p class="section-num">02</p>
+      <p class="section-label">ENGINE</p>
+      <h2>The Sound<br>of Pure Intent</h2>
+      <p class="body-text">
+        No turbochargers. No shortcuts. The 4.0-litre flat-six
+        breathes freely to a 9,000 RPM redline — a mechanical
+        symphony that no electrified powertrain can replicate.
+        510 hp. On demand. Instantly.
+      </p>
+      <div class="stats-grid">
+        <div class="stat-block"><span>510 HP</span><label>Power</label></div>
+        <div class="stat-block"><span>9,000</span><label>RPM Redline</label></div>
+        <div class="stat-block"><span>4.0L</span><label>Displacement</label></div>
+        <div class="stat-block"><span>470 Nm</span><label>Torque</label></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s4" class="scroll-section">
+    <div class="panel left-panel">
+      <p class="section-num">03</p>
+      <p class="section-label">BRAKING SYSTEM</p>
+      <h2>Stop Later.<br>Corner Harder.</h2>
+      <p class="body-text">
+        PCCB Carbon Ceramic brakes with 6-piston monobloc calipers
+        provide fade-free deceleration from 318 km/h. The rotors
+        operate red-hot under track conditions — and still deliver
+        consistent, confidence-inspiring feel at the pedal.
+      </p>
+      <div class="stat-pill">318 KM/H → ZERO</div>
+    </div>
+  </section>
+
+  <section id="s5" class="scroll-section">
+    <div class="panel right-panel">
+      <p class="section-num">04</p>
+      <p class="section-label">COCKPIT</p>
+      <h2>Reduced to<br>What Matters</h2>
+      <p class="body-text">
+        The GT3 interior removes everything that distracts.
+        What remains: full bucket seats, an Alcantara steering wheel
+        with integrated lap timer, and a PDK selector that responds
+        in under 100 milliseconds. You and the road. Nothing else.
+      </p>
+      <div class="tags-row">
+        <span class="tag">ALCANTARA</span>
+        <span class="tag">PDK 7-SPEED</span>
+        <span class="tag">SPORT CHRONO</span>
+        <span class="tag">ROLL CAGE READY</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="s6" class="scroll-section">
+    <div class="panel center-panel finale">
+      <p class="overline">THE COMPLETE PACKAGE</p>
+      <h1>YOUR GT3<br>AWAITS</h1>
+      <p class="tagline">Starting from <strong>$230,000</strong></p>
+      <button class="cta-btn">CONFIGURE NOW →</button>
+      <p class="fine-print">Available at authorized Porsche dealers worldwide</p>
+    </div>
+  </section>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
