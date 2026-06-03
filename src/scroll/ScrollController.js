@@ -6,19 +6,25 @@ import { setActiveDot } from '../ui/Navigation.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
-let _annotations = null
+let _annotations      = null
+let currentSectionIndex = -1
 
 export function initScrollController(annotations) {
   _annotations = annotations
 
-  SECTIONS.forEach((section, index) => {
+  // Start clean
+  _annotations.hide()
+  currentSectionIndex = 0
+
+  SECTIONS.forEach((section, i) => {
     ScrollTrigger.create({
       trigger: `#${section.id}`,
-      start: 'top center',
-      end:   'bottom center',
-      scrub: false,
-      onEnter:     () => transitionToSection(section, index),
-      onEnterBack: () => transitionToSection(section, index)
+      start: 'top 40%',
+      end:   'bottom 40%',
+      onEnter:     () => activateSection(i),
+      onEnterBack: () => activateSection(i),
+      onLeave:     () => deactivateSection(i),
+      onLeaveBack: () => deactivateSection(i),
     })
   })
 
@@ -33,11 +39,17 @@ export function initScrollController(annotations) {
   })
 }
 
-function transitionToSection(section, index) {
+function activateSection(i) {
+  if (currentSectionIndex === i) return   // already active, skip
+  currentSectionIndex = i
+  const section = SECTIONS[i]
+
+  // Camera + model
   setTargetCamera(section.camera.x, section.camera.y, section.camera.z)
   setTargetLookAt(section.lookAt.x, section.lookAt.y, section.lookAt.z)
   setTargetRotY(section.rotY)
 
+  // Panel animation
   const panel = document.querySelector(`#${section.id} .panel`)
   if (panel) {
     const isLeft  = panel.classList.contains('left-panel')
@@ -49,11 +61,25 @@ function transitionToSection(section, index) {
     )
   }
 
-  if (_annotations) {
-    _annotations.hide()
-    // Wait for camera to start moving before drawing annotations
-    setTimeout(() => _annotations.show(section.annotations), 400)
-  }
+  // Nav dot
+  setActiveDot(i)
 
-  setActiveDot(index)
+  // Annotations — always hide first, then show if section has any
+  _annotations.hide()
+  if (section.annotations && section.annotations.length > 0) {
+    setTimeout(() => {
+      // Guard: only show if user hasn't scrolled away in the meantime
+      if (currentSectionIndex === i) {
+        _annotations.show(section.annotations)
+      }
+    }, 420)
+  }
+}
+
+function deactivateSection(i) {
+  // Only act if this section was the active one
+  if (currentSectionIndex === i) {
+    currentSectionIndex = -1
+    _annotations.hide()
+  }
 }

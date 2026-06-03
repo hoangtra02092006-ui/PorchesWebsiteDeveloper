@@ -42,12 +42,12 @@ export class Annotations {
   }
 
   hide() {
-    this.active = []
+    this.active = []   // clear immediately so liveUpdate stops drawing
     this.svg.querySelectorAll('.ann-group').forEach(g => {
       g.style.transition = 'opacity 0.25s'
       g.style.opacity = '0'
     })
-    setTimeout(() => { this.svg.innerHTML = '' }, 300)
+    setTimeout(() => { this.svg.innerHTML = '' }, 280)
   }
 
   redraw() {
@@ -60,6 +60,7 @@ export class Annotations {
 
   // Called every frame — only moves the tip dot; line/tick/label are fixed to endX/endY
   liveUpdate() {
+    if (!this.active || this.active.length === 0) return
     const groups = this.svg.querySelectorAll('.ann-group')
     if (!groups.length || groups.length !== this.active.length) return
 
