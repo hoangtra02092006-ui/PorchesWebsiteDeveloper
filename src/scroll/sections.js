@@ -2,8 +2,8 @@ export const SECTIONS = [
   {
     id: 's1',
     name: 'Overview',
-    camera: { x: 0, y: 1.2, z: 7 },
-    lookAt: { x: 0, y: 0.5, z: 0 },
+    camera: { x: 0, y: 1.0, z: 6.5 },
+    lookAt: { x: 0, y: 0.4, z: 0 },
     rotY: 0,
     annotations: []
   },

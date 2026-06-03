@@ -1,151 +1,144 @@
-import gsap from 'gsap'
-
-const svg = document.getElementById('annotation-svg')
-let currentAnnotations = []
-
-export function showAnnotations(annotations) {
-  // Clear
-  while (svg.firstChild) svg.removeChild(svg.firstChild)
-  currentAnnotations = annotations
-
-  if (!annotations || annotations.length === 0) return
-
-  annotations.forEach((ann, index) => {
-    setTimeout(() => drawAnnotation(ann, index), index * 200)
-  })
-}
-
-function drawAnnotation(ann, index) {
-  const vw = window.innerWidth
-  const vh = window.innerHeight
-
-  const x1 = ann.tipX / 100 * vw
-  const y1 = ann.tipY / 100 * vh
-  const x2 = ann.endX / 100 * vw
-  const y2 = ann.endY / 100 * vh
-
-  const mx = x1 + (x2 - x1) * 0.45
-  const my = y2
-
-  const lineLen = Math.hypot(mx - x1, my - y1) + Math.abs(x2 - mx)
-  const lenStr  = lineLen.toFixed(1)
-
-  const ns = 'http://www.w3.org/2000/svg'
-
-  // A) Pulsing dot — solid core
-  const dot = document.createElementNS(ns, 'circle')
-  dot.setAttribute('cx', x1)
-  dot.setAttribute('cy', y1)
-  dot.setAttribute('r',  3)
-  dot.setAttribute('fill', '#C9A84C')
-  svg.appendChild(dot)
-
-  // A) Pulse ring
-  const ring = document.createElementNS(ns, 'circle')
-  ring.setAttribute('cx', x1)
-  ring.setAttribute('cy', y1)
-  ring.setAttribute('r',  3)
-  ring.setAttribute('fill', 'none')
-  ring.setAttribute('stroke', '#C9A84C')
-  ring.setAttribute('stroke-width', '1')
-
-  const animR = document.createElementNS(ns, 'animate')
-  animR.setAttribute('attributeName', 'r')
-  animR.setAttribute('from', '3')
-  animR.setAttribute('to',   '12')
-  animR.setAttribute('dur',  '1.5s')
-  animR.setAttribute('repeatCount', 'indefinite')
-  ring.appendChild(animR)
-
-  const animO = document.createElementNS(ns, 'animate')
-  animO.setAttribute('attributeName', 'opacity')
-  animO.setAttribute('from', '0.6')
-  animO.setAttribute('to',   '0')
-  animO.setAttribute('dur',  '1.5s')
-  animO.setAttribute('repeatCount', 'indefinite')
-  ring.appendChild(animO)
-  svg.appendChild(ring)
-
-  // B) Elbow polyline with draw animation
-  const poly = document.createElementNS(ns, 'polyline')
-  poly.setAttribute('points', `${x1},${y1} ${mx},${my} ${x2},${y2}`)
-  poly.setAttribute('fill', 'none')
-  poly.setAttribute('stroke', '#C9A84C')
-  poly.setAttribute('stroke-width', '0.8')
-  poly.setAttribute('opacity', '0.75')
-  poly.setAttribute('stroke-dasharray', lenStr)
-  poly.setAttribute('stroke-dashoffset', lenStr)
-
-  const animDash = document.createElementNS(ns, 'animate')
-  animDash.setAttribute('attributeName', 'stroke-dashoffset')
-  animDash.setAttribute('from', lenStr)
-  animDash.setAttribute('to',   '0')
-  animDash.setAttribute('dur',  '0.5s')
-  animDash.setAttribute('begin', `${index * 0.2}s`)
-  animDash.setAttribute('fill',  'forward')
-  poly.appendChild(animDash)
-  svg.appendChild(poly)
-
-  // C) Tick at end
-  const tick = document.createElementNS(ns, 'line')
-  tick.setAttribute('x1', x2)
-  tick.setAttribute('y1', y2 - 5)
-  tick.setAttribute('x2', x2)
-  tick.setAttribute('y2', y2 + 5)
-  tick.setAttribute('stroke', '#C9A84C')
-  tick.setAttribute('stroke-width', '0.8')
-  tick.setAttribute('opacity', '0.6')
-  svg.appendChild(tick)
-
-  // D) Label foreignObject
-  const labelWidth = 220
-  let fx = ann.side === 'right' ? x2 + 12 : x2 - labelWidth - 12
-  const fy = y2 - 18
-
-  const fo = document.createElementNS(ns, 'foreignObject')
-  fo.setAttribute('x',      fx)
-  fo.setAttribute('y',      fy)
-  fo.setAttribute('width',  labelWidth)
-  fo.setAttribute('height', 60)
-  fo.style.overflow = 'visible'
-
-  const div = document.createElement('div')
-  div.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml')
-  div.style.cssText = 'font-family: Rajdhani, sans-serif;'
-
-  const labelEl = document.createElement('div')
-  labelEl.style.cssText = `
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: 0.04em;
-    line-height: 1.3;
-  `
-  labelEl.textContent = ann.label
-
-  const sublabelEl = document.createElement('div')
-  sublabelEl.style.cssText = `
-    font-size: 0.65rem;
-    font-weight: 300;
-    color: rgba(255,255,255,0.45);
-    margin-top: 3px;
-  `
-  sublabelEl.textContent = ann.sublabel
-
-  div.appendChild(labelEl)
-  div.appendChild(sublabelEl)
-  fo.appendChild(div)
-  svg.appendChild(fo)
-
-  gsap.fromTo(fo,
-    { opacity: 0 },
-    { opacity: 1, duration: 0.4, delay: index * 0.2 + 0.45 }
-  )
-}
-
-// Redraw on resize
-window.addEventListener('resize', () => {
-  if (currentAnnotations.length > 0) {
-    showAnnotations(currentAnnotations)
+export class Annotations {
+  constructor() {
+    this.svg = document.getElementById('annotation-svg')
+    this.currentAnnotations = []
+    window.addEventListener('resize', () => this.redraw())
   }
-})
+
+  show(annotationsArray) {
+    console.log('[Annotations] showing', annotationsArray.length, 'annotations')
+    this.currentAnnotations = annotationsArray
+    this.redraw()
+  }
+
+  hide() {
+    this.currentAnnotations = []
+    const els = this.svg.querySelectorAll('.ann-group')
+    els.forEach(el => {
+      el.style.transition = 'opacity 0.3s'
+      el.style.opacity = '0'
+    })
+    setTimeout(() => { this.svg.innerHTML = '' }, 350)
+  }
+
+  redraw() {
+    this.svg.innerHTML = ''
+    if (!this.currentAnnotations.length) return
+    this.currentAnnotations.forEach((ann, i) => {
+      setTimeout(() => this.drawOne(ann, i), i * 220)
+    })
+  }
+
+  drawOne(ann, index) {
+    const W = window.innerWidth
+    const H = window.innerHeight
+
+    const x1 = (ann.tipX / 100) * W
+    const y1 = (ann.tipY / 100) * H
+    const x2 = (ann.endX / 100) * W
+    const y2 = (ann.endY / 100) * H
+
+    // L-shape: tip → (x2, y1) → (x2, y2)
+    const ex = x2
+    const ey = y1
+
+    const seg1     = Math.hypot(ex - x1, ey - y1)
+    const seg2     = Math.abs(y2 - ey)
+    const totalLen = (seg1 + seg2).toFixed(1)
+
+    const NS = 'http://www.w3.org/2000/svg'
+
+    const g = document.createElementNS(NS, 'g')
+    g.setAttribute('class', 'ann-group')
+    g.style.opacity = '0'
+
+    // ── PULSING RING ──
+    const ring = document.createElementNS(NS, 'circle')
+    ring.setAttribute('cx', x1)
+    ring.setAttribute('cy', y1)
+    ring.setAttribute('r', '3')
+    ring.setAttribute('fill', 'none')
+    ring.setAttribute('stroke', '#C9A84C')
+    ring.setAttribute('stroke-width', '1')
+    ring.innerHTML = `
+      <animate attributeName="r" from="3" to="14"
+        dur="1.6s" repeatCount="indefinite" begin="0s"/>
+      <animate attributeName="opacity" from="0.7" to="0"
+        dur="1.6s" repeatCount="indefinite" begin="0s"/>
+    `
+
+    // ── SOLID DOT ──
+    const dot = document.createElementNS(NS, 'circle')
+    dot.setAttribute('cx', x1)
+    dot.setAttribute('cy', y1)
+    dot.setAttribute('r', '3.5')
+    dot.setAttribute('fill', '#C9A84C')
+
+    // ── ELBOW LINE with draw animation ──
+    const path = document.createElementNS(NS, 'polyline')
+    path.setAttribute('points', `${x1},${y1} ${ex},${ey} ${x2},${y2}`)
+    path.setAttribute('fill', 'none')
+    path.setAttribute('stroke', '#C9A84C')
+    path.setAttribute('stroke-width', '0.9')
+    path.setAttribute('opacity', '0.8')
+    path.setAttribute('stroke-dasharray', totalLen)
+    path.setAttribute('stroke-dashoffset', totalLen)
+    path.innerHTML = `
+      <animate attributeName="stroke-dashoffset"
+        from="${totalLen}" to="0"
+        dur="0.55s" fill="freeze" begin="0s"
+        calcMode="spline" keyTimes="0;1"
+        keySplines="0.4 0 0.2 1"/>
+    `
+
+    // ── END TICK ──
+    const tick = document.createElementNS(NS, 'line')
+    tick.setAttribute('x1', x2 - 6)
+    tick.setAttribute('y1', y2)
+    tick.setAttribute('x2', x2 + 6)
+    tick.setAttribute('y2', y2)
+    tick.setAttribute('stroke', '#C9A84C')
+    tick.setAttribute('stroke-width', '1')
+    tick.setAttribute('opacity', '0.7')
+
+    // ── LABEL (foreignObject) ──
+    const labelW = 210
+    const labelH = 52
+    const labelX = ann.side === 'right' ? x2 + 14 : x2 - labelW - 14
+    const labelY = y2 - 24
+
+    const fo = document.createElementNS(NS, 'foreignObject')
+    fo.setAttribute('x', labelX)
+    fo.setAttribute('y', labelY)
+    fo.setAttribute('width', labelW)
+    fo.setAttribute('height', labelH)
+    fo.setAttribute('overflow', 'visible')
+    fo.innerHTML = `
+      <div xmlns="http://www.w3.org/1999/xhtml"
+           style="font-family:'Rajdhani',sans-serif; line-height:1.3;">
+        <div style="font-size:0.78rem; font-weight:600; color:#ffffff;
+                    letter-spacing:0.05em; white-space:nowrap;">
+          ${ann.label}
+        </div>
+        <div style="font-size:0.62rem; font-weight:300;
+                    color:rgba(255,255,255,0.45); margin-top:3px;
+                    white-space:nowrap;">
+          ${ann.sublabel}
+        </div>
+      </div>
+    `
+
+    g.appendChild(ring)
+    g.appendChild(dot)
+    g.appendChild(path)
+    g.appendChild(tick)
+    g.appendChild(fo)
+    this.svg.appendChild(g)
+
+    // Fade in group
+    setTimeout(() => {
+      g.style.transition = 'opacity 0.4s ease'
+      g.style.opacity = '1'
+    }, 60)
+  }
+}

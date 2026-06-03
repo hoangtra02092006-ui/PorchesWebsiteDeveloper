@@ -5,9 +5,9 @@ export let scene, camera, renderer
 export let model = null
 export let particles
 
-export const targetCamPos  = new THREE.Vector3(0, 1.2, 7)
-export const targetLookAt  = new THREE.Vector3(0, 0.5, 0)
-export const lookAtCurrent = new THREE.Vector3(0, 0.5, 0)
+export const targetCamPos  = new THREE.Vector3(0, 1.0, 6.5)
+export const targetLookAt  = new THREE.Vector3(0, 0.4, 0)
+export const lookAtCurrent = new THREE.Vector3(0, 0.4, 0)
 export let targetRotY = 0
 
 const clock = new THREE.Clock()
@@ -36,8 +36,8 @@ export function initScene() {
 
   // Camera
   camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100)
-  camera.position.set(0, 1.2, 7)
-  camera.lookAt(0, 0.5, 0)
+  camera.position.set(0, 1.0, 6.5)
+  camera.lookAt(0, 0.4, 0)
 
   // Lights
   const ambient = new THREE.AmbientLight('#ffffff', 0.25)

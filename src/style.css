@@ -39,6 +39,105 @@ canvas#webgl {
   pointer-events: none;
 }
 
+/* ─── HERO SECTION ─── */
+.hero-section {
+  display: block; /* override flex so absolute children work */
+}
+
+.hero-badge {
+  position: absolute;
+  top: 140px;
+  left: 6vw;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.3em;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.hero-name {
+  position: absolute;
+  bottom: 80px;
+  left: 6vw;
+  pointer-events: none;
+  z-index: 20;
+}
+.hero-brand {
+  display: block;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 1rem;
+  color: var(--gold);
+  letter-spacing: 0.6em;
+  margin-bottom: 4px;
+}
+.hero-model {
+  display: block;
+  font-family: 'Bebas Neue', cursive;
+  font-size: clamp(5rem, 10vw, 9rem);
+  color: var(--white);
+  line-height: 0.85;
+}
+.hero-line {
+  width: 50px;
+  height: 1px;
+  background: var(--gold);
+  margin: 20px 0;
+}
+.hero-tagline {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.hero-specs {
+  position: absolute;
+  bottom: 80px;
+  right: 6vw;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: right;
+  pointer-events: none;
+  z-index: 20;
+}
+.hero-spec { display: flex; flex-direction: column; }
+.hero-num {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 2rem;
+  color: var(--gold);
+  line-height: 1;
+}
+.hero-unit {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 400;
+  color: var(--white-30);
+  letter-spacing: 0.15em;
+  margin-top: 2px;
+}
+
+.hero-scroll-hint {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  color: var(--gold);
+  pointer-events: none;
+  z-index: 20;
+  white-space: nowrap;
+  animation: hero-bounce 2s ease-in-out infinite;
+}
+@keyframes hero-bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(8px); }
+}
+
 /* ─── PANELS ─── */
 .panel {
   pointer-events: all;
@@ -361,4 +460,16 @@ h2 {
   h2 { font-size: 2.2rem; }
   #annotation-svg { display: none; }
   #top-nav { padding: 18px 20px; }
+
+  /* Hero mobile: stack name and specs vertically */
+  .hero-name  { bottom: 120px; }
+  .hero-model { font-size: 4rem; }
+  .hero-specs {
+    bottom: auto;
+    top: 140px;
+    right: 6vw;
+    gap: 10px;
+  }
+  .hero-num  { font-size: 1.4rem; }
+  .hero-badge { top: 80px; }
 }
