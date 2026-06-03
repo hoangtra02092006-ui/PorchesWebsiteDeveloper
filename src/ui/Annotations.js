@@ -58,7 +58,7 @@ export class Annotations {
     })
   }
 
-  // Called every frame from render loop — moves existing SVG elements without recreating
+  // Called every frame — only moves the tip dot; line/tick/label are fixed to endX/endY
   liveUpdate() {
     const groups = this.svg.querySelectorAll('.ann-group')
     if (!groups.length || groups.length !== this.active.length) return
@@ -79,30 +79,17 @@ export class Annotations {
       const ex = x2
       const ey = y1
 
-      // Update dot + ring positions
+      // Move both circles (pulse ring + solid dot) to new tip position
       g.querySelectorAll('circle').forEach(c => {
-        c.setAttribute('cx', x1)
-        c.setAttribute('cy', y1)
+        c.setAttribute('cx', String(x1))
+        c.setAttribute('cy', String(y1))
       })
 
-      // Update line
+      // Update polyline points only — never touch dasharray/dashoffset here
       const poly = g.querySelector('polyline')
       if (poly) poly.setAttribute('points', `${x1},${y1} ${ex},${ey} ${x2},${y2}`)
 
-      // Update tick
-      const tick = g.querySelector('line')
-      if (tick) {
-        tick.setAttribute('x1', x2); tick.setAttribute('y1', y2 - 5)
-        tick.setAttribute('x2', x2); tick.setAttribute('y2', y2 + 5)
-      }
-
-      // Update label position
-      const fo = g.querySelector('foreignObject')
-      if (fo) {
-        const labelW = 220
-        fo.setAttribute('x', String(ann.side === 'right' ? x2 + 12 : x2 - labelW - 12))
-        fo.setAttribute('y', String(y2 - 22))
-      }
+      // tick and foreignObject are anchored to endX/endY (fixed viewport %) — do not update
     })
   }
 
@@ -158,6 +145,7 @@ export class Annotations {
     poly.setAttribute('stroke-width', '1')
     poly.setAttribute('opacity', '0.8')
     poly.setAttribute('stroke-linecap', 'round')
+    poly.setAttribute('data-drawn', 'true')
     poly.setAttribute('stroke-dasharray', `${totalLen}`)
     poly.setAttribute('stroke-dashoffset', `${totalLen}`)
     poly.innerHTML = `
@@ -165,6 +153,13 @@ export class Annotations {
         from="${totalLen}" to="0" dur="0.55s" fill="freeze"
         calcMode="spline" keyTimes="0;1" keySplines="0.4 0 0.2 1"/>
     `
+    // After the draw animation finishes, remove dasharray/dashoffset so
+    // liveUpdate()'s points mutation cannot reset the animation
+    setTimeout(() => {
+      poly.removeAttribute('stroke-dasharray')
+      poly.removeAttribute('stroke-dashoffset')
+      poly.innerHTML = ''
+    }, 650)
 
     // End tick
     const tick = document.createElementNS(NS, 'line')

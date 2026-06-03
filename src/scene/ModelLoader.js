@@ -5,18 +5,11 @@ import { onLoadComplete, updateLoadingBar } from '../ui/LoadingScreen.js'
 
 const MODEL_URL = 'https://raw.githubusercontent.com/hoangtra02092006-ui/3D-Porches-File/main/Meshy_AI_A_sleek_Porsche_911_G_0603064402_texture.glb'
 
-// ── Set to false when calibration is complete ──
-const DEBUG_MARKERS = true
-
 // Exported — starts empty, populated in-place after model loads
 export const markers = {}
 
-const markerMaterial = new THREE.MeshBasicMaterial({
-  color: 0xFF0000,
-  visible: DEBUG_MARKERS,
-  depthTest: false       // always renders on top of the car
-})
-const markerGeo = new THREE.SphereGeometry(DEBUG_MARKERS ? 0.04 : 0.01)
+const markerMaterial = new THREE.MeshBasicMaterial({ visible: false })
+const markerGeo = new THREE.SphereGeometry(0.01)
 
 export function loadModel() {
   const manager = new THREE.LoadingManager()
