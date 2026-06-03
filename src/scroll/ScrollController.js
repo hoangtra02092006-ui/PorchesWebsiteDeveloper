@@ -49,10 +49,10 @@ function transitionToSection(section, index) {
     )
   }
 
-  // Hide current annotations, then show new ones after camera starts moving
   if (_annotations) {
     _annotations.hide()
-    setTimeout(() => _annotations.show(section.annotations), 350)
+    // Wait for camera to start moving before drawing annotations
+    setTimeout(() => _annotations.show(section.annotations), 400)
   }
 
   setActiveDot(index)

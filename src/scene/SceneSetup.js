@@ -10,14 +10,14 @@ export const targetLookAt  = new THREE.Vector3(0, 0.4, 0)
 export const lookAtCurrent = new THREE.Vector3(0, 0.4, 0)
 export let targetRotY = 0
 
-let annotationsRef = null  // set via setAnnotationsInstance after init
+let annotationsRef = null
 
 const clock = new THREE.Clock()
 
-export function setModel(m) { model = m }
-export function setTargetCamera(x, y, z) { targetCamPos.set(x, y, z) }
-export function setTargetLookAt(x, y, z) { targetLookAt.set(x, y, z) }
-export function setTargetRotY(v) { targetRotY = v }
+export function setModel(m)             { model = m }
+export function setTargetCamera(x,y,z) { targetCamPos.set(x, y, z) }
+export function setTargetLookAt(x,y,z) { targetLookAt.set(x, y, z) }
+export function setTargetRotY(v)        { targetRotY = v }
 export function setAnnotationsInstance(a) { annotationsRef = a }
 
 export function initScene() {
@@ -68,11 +68,8 @@ export function initScene() {
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(20, 20),
     new THREE.MeshStandardMaterial({
-      color: '#0a0a0a',
-      metalness: 0.95,
-      roughness: 0.1,
-      transparent: true,
-      opacity: 0.6
+      color: '#0a0a0a', metalness: 0.95, roughness: 0.1,
+      transparent: true, opacity: 0.6
     })
   )
   ground.rotation.x = -Math.PI / 2
@@ -104,20 +101,10 @@ function animate() {
     model.rotation.y += (targetRotY - model.rotation.y) * 0.035
   }
 
-  // Keep annotations in sync with actual model rotation
-  if (annotationsRef) {
-    annotationsRef.updateModelRotation(model ? model.rotation.y : 0)
-  }
-
-  // Debug: log projected screen positions when window._debugAnn is true
-  if (window._debugAnn && annotationsRef && annotationsRef.active.length) {
-    annotationsRef.active.forEach(ann => {
-      const s = annotationsRef.toScreen(ann.tip3D)
-      console.log(ann.label, '→ screen:', Math.round(s.x), Math.round(s.y), s.behind ? '[BEHIND]' : '')
-    })
-  }
-
   if (particles) particles.update(delta)
 
   renderer.render(scene, camera)
+
+  // Live-update annotation dot positions every frame (no SVG recreation — just attr updates)
+  if (annotationsRef) annotationsRef.liveUpdate()
 }
